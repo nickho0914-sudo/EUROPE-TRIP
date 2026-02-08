@@ -3,135 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026 歐洲行 | 分頁導覽版</title>
+    <title>2026 歐遊完整導覽</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
         body, html { margin: 0; padding: 0; font-family: 'Noto Sans TC', sans-serif; background-color: #f2f2f7; height: 100%; width: 100%; }
-        
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=1200');
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&q=80&w=1200');
             background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 80px 40px; text-align: center; color: white; transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
         }
-
-        /* 分頁切換邏輯 */
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .notion-card { background: white; border-radius: 20px; padding: 20px; margin: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .notion-card { background: white; border-radius: 24px; padding: 20px; margin: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .day-label { background: #4f46e5; color: white; font-size: 10px; font-weight: 900; padding: 2px 10px; border-radius: 50px; margin-bottom: 10px; display: inline-block; }
-        .detail-item { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #374151; margin-top: 10px; }
-        .detail-item a { text-decoration: none; color: inherit; width: 100%; display: flex; gap: 10px; }
-        .map-tag { background: #fef2f2; color: #ef4444; font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+        .spot-link { display: flex; align-items: center; gap: 10px; padding: 12px; background: #f9fafb; border-radius: 15px; margin-top: 8px; cursor: pointer; }
+        .map-tag { background: #fee2e2; color: #ef4444; font-size: 10px; padding: 2px 6px; border-radius: 6px; font-weight: bold; margin-left: auto; }
+        .food-box { background: #f0f7ff; border-radius: 12px; padding: 12px; margin-top: 15px; font-size: 13px; border-left: 4px solid #4f46e5; color: #1e40af; }
+        #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-blur: 5px; z-index: 10000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #detail-modal { background: white; width: 100%; max-width: 400px; border-radius: 30px; overflow: hidden; position: relative; }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
         <div>
-            <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl mx-auto flex items-center justify-center mb-6 border border-white/30 shadow-2xl">
-                <i class="fa-solid fa-map-location-dot text-white text-4xl"></i>
-            </div>
+            <div class="w-20 h-20 bg-white/20 backdrop-blur-lg rounded-3xl mx-auto flex items-center justify-center mb-6 border border-white/30"><i class="fa-solid fa-plane-up text-white text-4xl"></i></div>
             <h1 class="text-4xl font-black tracking-widest text-white">歐遊紀行</h1>
-            <p class="text-white/80 mt-3 tracking-[0.3em] font-light text-xs uppercase">2026 Family Trip</p>
+            <p class="text-white/80 mt-3 tracking-[0.3em] font-light text-xs uppercase">10日完整行程手冊</p>
         </div>
-        <button class="w-full max-w-xs bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl active:scale-95 transition-transform" onclick="runApp()">進入 App</button>
+        <button class="w-full max-w-xs bg-white text-blue-600 py-4 rounded-2xl font-black shadow-2xl" onclick="runApp()">展開完整行程</button>
+    </div>
+
+    <div id="modal-overlay" onclick="closeModal()">
+        <div id="detail-modal" onclick="event.stopPropagation()">
+            <img id="modal-img" src="" class="w-full h-52 object-cover">
+            <div class="p-6">
+                <h3 id="modal-title" class="text-xl font-bold mb-2"></h3>
+                <p id="modal-desc" class="text-gray-500 text-sm leading-relaxed mb-6"></p>
+                <div class="flex gap-2">
+                    <a id="modal-map-link" href="#" target="_blank" class="flex-1 bg-blue-600 text-white py-3 rounded-xl text-center font-bold">開啟導航</a>
+                    <button onclick="closeModal()" class="px-6 bg-gray-100 rounded-xl text-gray-500">關閉</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="app-main" class="hidden min-h-screen pb-32">
-        <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 p-5 border-b flex justify-between items-center text-gray-800">
-            <h2 id="page-title" class="text-xl font-black">詳細行程導覽</h2>
-            <i class="fa-solid fa-circle-user text-2xl text-gray-300"></i>
+        <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 p-5 border-b flex justify-between items-center text-gray-800">
+            <h2 id="page-title" class="text-xl font-black">每日行程</h2>
+            <i class="fa-solid fa-circle-info text-blue-500" onclick="alert('點擊景點可看圖片與簡介')"></i>
         </header>
 
         <div id="itinerary" class="tab-content active max-w-md mx-auto">
             <div class="notion-card">
-                <span class="day-label">DAY 2 | 2/13</span>
-                <h3 class="font-bold text-lg text-gray-800">羊角村 ➔ 風車村</h3>
-                <div class="detail-item">
-                    <a href="https://www.google.com/maps/search/?api=1&query=Giethoorn" target="_blank">
-                        <i class="fa-solid fa-location-dot text-red-500"></i>
-                        <span>羊角村 <span class="map-tag">導航</span></span>
-                    </a>
-                </div>
+                <span class="day-label">DAY 1 | 2/12</span>
+                <h3 class="font-bold text-lg">台北 ➔ 阿姆斯特丹</h3>
+                <p class="text-sm text-gray-500 mt-2">夜宿機上，期待明早抵達。</p>
+                <div class="food-box">晚：機上餐食</div>
             </div>
 
-            <div class="notion-card border-l-4 border-orange-500">
-                <span class="day-label bg-orange-600">DAY 3 | 2/14</span>
-                <h3 class="font-bold text-lg text-gray-800">鹿特丹市場美食</h3>
-                <div class="detail-item">
-                    <a href="https://www.google.com/maps/search/?api=1&query=Markthal+Rotterdam" target="_blank">
-                        <i class="fa-solid fa-utensils text-orange-500"></i>
-                        <span>Markthal 市場 <span class="map-tag">導航</span></span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="notion-card border-l-4 border-rose-500">
-                <span class="day-label bg-rose-600">DAY 7 | 2/18</span>
-                <h3 class="font-bold text-lg text-gray-800">巴黎藝術與百貨</h3>
-                <div class="detail-item">
-                    <a href="https://www.google.com/maps/search/?api=1&query=Louvre+Museum" target="_blank">
-                        <i class="fa-solid fa-location-dot text-red-500"></i>
-                        <span>羅浮宮 <span class="map-tag">導航</span></span>
-                    </a>
-                </div>
-            </div>
-            <p class="text-center text-gray-400 text-xs py-5">行程細節已補完至主手冊</p>
-        </div>
-
-        <div id="hotels" class="tab-content max-w-md mx-auto">
             <div class="notion-card">
-                <h3 class="font-bold text-lg text-gray-800 mb-4 text-center border-b pb-2">住宿飯店資訊</h3>
-                
-                <div class="mb-6">
-                    <p class="text-xs font-bold text-indigo-600 mb-1">阿姆斯特丹 (Day 2)</p>
-                    <a href="https://www.google.com/maps/search/?api=1&query=Van+der+Valk+Hotel+Schiphol" target="_blank" class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                        <i class="fa-solid fa-hotel text-gray-400"></i>
-                        <div>
-                            <p class="font-bold text-sm">VAN DER VALK SCHIPHOL</p>
-                            <p class="text-[10px] text-gray-400">點擊導航至飯店</p>
-                        </div>
-                    </a>
+                <span class="day-label">DAY 2 | 2/13</span>
+                <h3 class="font-bold text-lg">羊角村 & 風車村</h3>
+                <div class="spot-link" onclick="openModal('羊角村', '荷蘭最迷人的水鄉，沒有道路，只有小橋流水與草屋。', 'https://images.unsplash.com/photo-1558230242-6a7593922650?w=600', 'https://www.google.com/maps/search/?api=1&query=Giethoorn')">
+                    <i class="fa-solid fa-anchor text-blue-500"></i><span>羊角村遊船</span><span class="map-tag">簡介</span>
                 </div>
-
-                <div class="mb-6">
-                    <p class="text-xs font-bold text-indigo-600 mb-1">鹿特丹 (Day 3)</p>
-                    <a href="https://www.google.com/maps/search/?api=1&query=Hilton+Rotterdam" target="_blank" class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                        <i class="fa-solid fa-hotel text-gray-400"></i>
-                        <div>
-                            <p class="font-bold text-sm">HILTON ROTTERDAM</p>
-                            <p class="text-[10px] text-gray-400">點擊導航至飯店</p>
-                        </div>
-                    </a>
+                <div class="spot-link" onclick="openModal('風車村', '保存完好的歷史風車，感受荷蘭18世紀的生活場景。', 'https://images.unsplash.com/photo-1549213821-4708d624e1d1?w=600', 'https://www.google.com/maps/search/?api=1&query=Zaanse+Schans')">
+                    <i class="fa-solid fa-wind text-green-500"></i><span>桑斯安斯風車村</span><span class="map-tag">簡介</span>
                 </div>
+                <div class="food-box">午：鄉村肋排 / 晚：中式七菜一湯</div>
+            </div>
 
-                <div class="mb-6">
-                    <p class="text-xs font-bold text-indigo-600 mb-1">巴黎 (Day 6-7)</p>
-                    <a href="https://www.google.com/maps/search/?api=1&query=Novotel+Paris+Centre+Tour+Eiffel" target="_blank" class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl">
-                        <i class="fa-solid fa-hotel text-gray-400"></i>
-                        <div>
-                            <p class="font-bold text-sm">NOVOTEL TOUR EIFFEL</p>
-                            <p class="text-[10px] text-gray-400">點擊導航至飯店</p>
-                        </div>
-                    </a>
+            <div class="notion-card">
+                <span class="day-label">DAY 3 | 2/14</span>
+                <h3 class="font-bold text-lg">阿姆 ➔ 鹿特丹</h3>
+                <div class="spot-link" onclick="openModal('Markthal 市場', '壯觀的拱形建築，天花板充滿鮮艷彩繪，匯集世界美食。', 'https://images.unsplash.com/photo-1582234053641-f7615967756e?w=600', 'https://www.google.com/maps/search/?api=1&query=Markthal+Rotterdam')">
+                    <i class="fa-solid fa-utensils text-orange-500"></i><span>Markthal 市場</span><span class="map-tag">簡介</span>
+                </div>
+                <div class="food-box">午：荷式雞排 / 晚：市場自理 (發20€)</div>
+            </div>
+
+            <div class="notion-card">
+                <span class="day-label">DAY 4 | 2/15</span>
+                <h3 class="font-bold text-lg">布魯日 ➔ 布魯塞爾</h3>
+                <div class="spot-link" onclick="openModal('布魯日古城', '比利時最美的中古世紀小鎮，鐘樓與運河如詩如畫。', 'https://images.unsplash.com/photo-1510312151390-50d4d037190f?w=600', 'https://www.google.com/maps/search/?api=1&query=Brugge')">
+                    <i class="fa-solid fa-city text-indigo-500"></i><span>布魯日巡禮</span><span class="map-tag">簡介</span>
+                </div>
+                <div class="food-box">午：淡菜風味 / 晚：中式七菜一湯</div>
+            </div>
+
+            <div class="notion-card">
+                <span class="day-label">DAY 5 | 2/16</span>
+                <h3 class="font-bold text-lg">比利時 ➔ 法國漢斯</h3>
+                <div class="spot-link" onclick="openModal('漢斯大教堂', '法國歷代國王加冕之地，歌德式建築的巔峰之作。', 'https://images.unsplash.com/photo-1559828585-649774659341?w=600', 'https://www.google.com/maps/search/?api=1&query=Reims+Cathedral')">
+                    <i class="fa-solid fa-church text-gray-500"></i><span>漢斯聖母大教堂</span><span class="map-tag">簡介</span>
+                </div>
+                <div class="food-box">午：香檳雞風味 / 晚：中式七菜一湯</div>
+            </div>
+
+            <div class="notion-card">
+                <span class="day-label">DAY 6 | 2/17</span>
+                <h3 class="font-bold text-lg text-gray-800">巴黎巡禮</h3>
+                <div class="spot-link" onclick="openModal('艾菲爾鐵塔', '巴黎的靈魂標誌，夜晚的閃耀更加動人。', 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=600', 'https://www.google.com/maps/search/?api=1&query=Eiffel+Tower')">
+                    <i class="fa-solid fa-tower-observation text-rose-500"></i><span>艾菲爾鐵塔</span><span class="map-tag">簡介</span>
+                </div>
+                <div class="food-box">午：鐵塔景觀餐 / 晚：中式七菜一湯</div>
+            </div>
+
+            <div class="notion-card">
+                <span class="day-label">DAY 7 | 2/18</span>
+                <h3 class="font-bold text-lg">羅浮宮 & 百貨購物</h3>
+                <div class="spot-link" onclick="openModal('羅浮宮', '世界藝術巔峰，必看三寶：蒙娜麗莎、維納斯、勝利女神。', 'https://images.unsplash.com/photo-1597910037310-7dd8ddb93e24?w=600', 'https://www.google.com/maps/search/?api=1&query=Louvre+Museum')">
+                    <i class="fa-solid fa-palette text-amber-500"></i><span>羅浮宮博物館</span><span class="map-tag">簡介</span>
+                </div>
+                <div class="food-box">午：百貨自理 / 晚：中式七菜一湯</div>
+            </div>
+
+            <div class="notion-card">
+                <span class="day-label">DAY 8 | 2/19</span>
+                <h3 class="font-bold text-lg">凡爾賽宮 ➔ 聖心堂</h3>
+                <div class="spot-link" onclick="openModal('凡爾賽宮', '路易十四所建，極盡奢華的宮殿與法式花園。', 'https://images.unsplash.com/photo-1519003722824-192d992a6039?w=600', 'https://www.google.com/maps/search/?api=1&query=Chateau+de+Versailles')">
+                    <i class="fa-solid fa-crown text-yellow-600"></i><span>凡爾賽宮</span><span class="map-tag">簡介</span>
+                </div>
+                <div class="food-box">午：中式 / 晚：法式鴨腿紅酒餐</div>
+            </div>
+
+            <div class="notion-card bg-gray-50">
+                <span class="day-label bg-gray-400">DAY 9-10</span>
+                <h3 class="font-bold text-lg">巴黎 ➔ 台北</h3>
+                <p class="text-sm text-gray-500 mt-2">辦理退稅手續，帶著回憶回家。</p>
+                <div class="food-box">宿：機上餐食</div>
+            </div>
+        </div>
+
+        <div id="hotels" class="tab-content max-w-md mx-auto p-4">
+            <h3 class="text-xl font-bold mb-4">🏨 全程飯店</h3>
+            <div class="space-y-3">
+                <div class="bg-white p-4 rounded-2xl border" onclick="window.open('https://www.google.com/maps/search/?api=1&query=Van+der+Valk+Schiphol')">
+                    <p class="text-xs font-bold text-blue-600">D2 阿姆斯特丹</p>
+                    <p class="font-bold">Van der Valk Schiphol</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border" onclick="window.open('https://www.google.com/maps/search/?api=1&query=Hilton+Rotterdam')">
+                    <p class="text-xs font-bold text-blue-600">D3 鹿特丹</p>
+                    <p class="font-bold">Hilton Rotterdam</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border" onclick="window.open('https://www.google.com/maps/search/?api=1&query=Pullman+Brussels+Midi')">
+                    <p class="text-xs font-bold text-blue-600">D4 布魯塞爾</p>
+                    <p class="font-bold">Pullman Brussels Midi</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border" onclick="window.open('https://www.google.com/maps/search/?api=1&query=Novotel+Paris+Tour+Eiffel')">
+                    <p class="text-xs font-bold text-blue-600">D6-D8 巴黎</p>
+                    <p class="font-bold">Novotel Tour Eiffel</p>
                 </div>
             </div>
         </div>
 
-        <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t h-20 flex justify-around items-center pb-6 z-[100]">
-            <button onclick="showTab('itinerary', '行程導覽')" class="nav-btn text-blue-600 flex flex-col items-center">
-                <i class="fa-solid fa-calendar-day text-xl"></i><span class="text-[10px] font-bold">行程</span>
-            </button>
-            <button onclick="showTab('hotels', '飯店資訊')" class="nav-btn text-gray-400 flex flex-col items-center">
-                <i class="fa-solid fa-bed text-xl"></i><span class="text-[10px] font-bold">飯店</span>
-            </button>
-            <button onclick="alert('退稅重要提醒：\n1. 滿 100.01 歐元\n2. 找 PABLO 機器掃描\n3. 出現綠色笑臉 😊 才算完成')" class="text-gray-400 flex flex-col items-center">
-                <i class="fa-solid fa-euro-sign text-xl"></i><span class="text-[10px] font-bold">退稅</span>
-            </button>
+        <nav class="fixed bottom-0 w-full bg-white/95 border-t h-20 flex justify-around items-center pb-6">
+            <button onclick="showTab('itinerary', '每日行程', this)" class="nav-btn text-blue-600 flex flex-col items-center"><i class="fa-solid fa-calendar-day text-xl"></i><span class="text-[10px] font-bold">行程</span></button>
+            <button onclick="showTab('hotels', '住宿飯店', this)" class="nav-btn text-gray-400 flex flex-col items-center"><i class="fa-solid fa-hotel text-xl"></i><span class="text-[10px] font-bold">飯店</span></button>
+            <button onclick="alert('退稅提醒：滿100.01歐，找機器掃描綠臉 😊')" class="text-gray-400 flex flex-col items-center"><i class="fa-solid fa-euro-sign text-xl"></i><span class="text-[10px] font-bold">退稅</span></button>
         </nav>
     </div>
 
@@ -140,23 +173,22 @@
             document.getElementById('splash-screen').style.transform = 'translateY(-100%)';
             document.getElementById('app-main').classList.remove('hidden');
         }
-
-        function showTab(tabId, title) {
-            // 隱藏所有分頁
+        function showTab(tabId, title, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            // 顯示選擇的分頁
             document.getElementById(tabId).classList.add('active');
-            // 修改標題
             document.getElementById('page-title').innerText = title;
-            
-            // 修改按鈕顏色
-            const btns = document.querySelectorAll('.nav-btn');
-            btns.forEach(btn => btn.classList.replace('text-blue-600', 'text-gray-400'));
-            event.currentTarget.classList.replace('text-gray-400', 'text-blue-600');
-            
-            // 回到頂部
-            document.getElementById('app-main').scrollTo(0,0);
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-blue-600', 'text-gray-400'));
+            btn.classList.replace('text-gray-400', 'text-blue-600');
+            window.scrollTo(0,0);
         }
+        function openModal(name, desc, imgUrl, mapUrl) {
+            document.getElementById('modal-title').innerText = name;
+            document.getElementById('modal-desc').innerText = desc;
+            document.getElementById('modal-img').src = imgUrl;
+            document.getElementById('modal-map-link').href = mapUrl;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
     </script>
 </body>
 </html>
